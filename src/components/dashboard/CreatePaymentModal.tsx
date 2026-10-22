@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { X, UploadCloud, ShieldCheck, Check, Sparkles, FileText } from 'lucide-react';
+import { X, UploadCloud, ShieldCheck, Sparkles } from 'lucide-react';
 import { PaymentMethod } from '@/types/fintech';
 
 export interface CreatePaymentModalProps {
@@ -64,31 +64,32 @@ export function CreatePaymentModal({ isOpen, onClose, onSubmit }: CreatePaymentM
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full sm:max-w-md bg-white rounded-t-[32px] sm:rounded-[32px] p-6 shadow-2xl border border-[#E2EAE3] max-h-[90vh] overflow-y-auto">
+      <div className="w-full sm:max-w-md bg-white rounded-t-[28px] sm:rounded-[32px] p-5 sm:p-6 shadow-2xl border border-[#E2EAE3] max-h-[90dvh] overflow-y-auto pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-[#EEF3EF]">
-          <div>
-            <h2 className="text-lg font-bold text-[#112117] tracking-tight">
+        <div className="flex items-center justify-between pb-3.5 border-b border-[#EEF3EF]">
+          <div className="min-w-0 pr-2">
+            <h2 className="text-base sm:text-lg font-bold text-[#112117] tracking-tight truncate">
               Create & Verify Payment
             </h2>
-            <p className="text-xs text-[#62776A] mt-0.5">
-              Live Supabase DB + Cloudflare R2 Secure Archive
+            <p className="text-[11px] sm:text-xs text-[#62776A] mt-0.5 truncate">
+              Live Supabase DB + Cloudflare R2 Proof Storage
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="w-8 h-8 rounded-full bg-[#F2F6F3] text-[#4F6356] flex items-center justify-center hover:bg-[#E5ECE7] transition-colors"
+            className="w-8 h-8 rounded-full bg-[#F2F6F3] text-[#4F6356] flex items-center justify-center hover:bg-[#E5ECE7] transition-colors shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+        <form onSubmit={handleSubmit} className="mt-4 space-y-3.5">
           {/* Method Selection */}
           <div>
-            <label className="text-xs font-semibold text-[#576C60] block mb-2">
-              Payment Gateway / Method
+            <label className="text-[11px] font-semibold text-[#576C60] block mb-1.5 uppercase tracking-wider">
+              Payment Gateway
             </label>
             <div className="grid grid-cols-2 gap-2">
               {methods.map((m) => (
@@ -96,7 +97,7 @@ export function CreatePaymentModal({ isOpen, onClose, onSubmit }: CreatePaymentM
                   type="button"
                   key={m.id}
                   onClick={() => setMethod(m.id)}
-                  className={`p-2.5 rounded-2xl border text-left flex flex-col transition-all duration-150 ${
+                  className={`p-2 sm:p-2.5 rounded-xl sm:rounded-2xl border text-left flex flex-col transition-all duration-150 active:scale-95 ${
                     method === m.id
                       ? 'border-[#0B2C1F] bg-[#0B2C1F] text-white shadow-sm'
                       : 'border-[#E2EAE3] bg-white text-[#112117] hover:bg-[#F7F9F7]'
@@ -104,7 +105,7 @@ export function CreatePaymentModal({ isOpen, onClose, onSubmit }: CreatePaymentM
                 >
                   <span className="text-xs font-bold">{m.name}</span>
                   <span
-                    className={`text-[10px] mt-0.5 ${
+                    className={`text-[9px] sm:text-[10px] mt-0.5 ${
                       method === m.id ? 'text-[#A3D1B9]' : 'text-[#7B8F83]'
                     }`}
                   >
@@ -117,11 +118,11 @@ export function CreatePaymentModal({ isOpen, onClose, onSubmit }: CreatePaymentM
 
           {/* Amount in BDT */}
           <div>
-            <label className="text-xs font-semibold text-[#576C60] block mb-1">
+            <label className="text-[11px] font-semibold text-[#576C60] block mb-1 uppercase tracking-wider">
               Amount (BDT ৳)
             </label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold text-[#0B2C1F]">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-base font-bold text-[#0B2C1F]">
                 ৳
               </span>
               <input
@@ -131,14 +132,14 @@ export function CreatePaymentModal({ isOpen, onClose, onSubmit }: CreatePaymentM
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
-                className="w-full h-12 pl-10 pr-4 text-lg font-bold rounded-2xl border border-[#E2EAE3] focus:border-[#10B981] focus:ring-3 focus:ring-[#10B981]/15 outline-none"
+                className="w-full h-11 pl-9 pr-3 text-base font-bold rounded-xl sm:rounded-2xl border border-[#E2EAE3] focus:border-[#10B981] focus:ring-2 focus:ring-[#10B981]/15 outline-none bg-white text-[#112117]"
               />
             </div>
           </div>
 
           {/* Transaction ID / TrxID */}
           <div>
-            <label className="text-xs font-semibold text-[#576C60] block mb-1">
+            <label className="text-[11px] font-semibold text-[#576C60] block mb-1 uppercase tracking-wider">
               Transaction ID (TrxID)
             </label>
             <input
@@ -146,14 +147,14 @@ export function CreatePaymentModal({ isOpen, onClose, onSubmit }: CreatePaymentM
               required
               value={trxId}
               onChange={(e) => setTrxId(e.target.value.toUpperCase())}
-              placeholder="e.g. BK9A40812X or NPSB Ref"
-              className="w-full h-11 px-4 font-mono text-sm tracking-wider uppercase rounded-2xl border border-[#E2EAE3] focus:border-[#10B981] focus:ring-3 focus:ring-[#10B981]/15 outline-none"
+              placeholder="e.g. BK9A40812X or Bank Ref"
+              className="w-full h-11 px-3 font-mono text-base tracking-wider uppercase rounded-xl sm:rounded-2xl border border-[#E2EAE3] focus:border-[#10B981] focus:ring-2 focus:ring-[#10B981]/15 outline-none bg-white text-[#112117]"
             />
           </div>
 
           {/* Recipient / Merchant */}
           <div>
-            <label className="text-xs font-semibold text-[#576C60] block mb-1">
+            <label className="text-[11px] font-semibold text-[#576C60] block mb-1 uppercase tracking-wider">
               Recipient / Merchant
             </label>
             <input
@@ -161,29 +162,29 @@ export function CreatePaymentModal({ isOpen, onClose, onSubmit }: CreatePaymentM
               required
               value={recipientName}
               onChange={(e) => setRecipientName(e.target.value)}
-              placeholder="e.g. Apex Footwear / Inflow Account"
-              className="w-full h-11 px-4 text-sm rounded-2xl border border-[#E2EAE3] focus:border-[#10B981] focus:ring-3 focus:ring-[#10B981]/15 outline-none"
+              placeholder="e.g. Apex Footwear / Personal"
+              className="w-full h-11 px-3 text-base rounded-xl sm:rounded-2xl border border-[#E2EAE3] focus:border-[#10B981] focus:ring-2 focus:ring-[#10B981]/15 outline-none bg-white text-[#112117]"
             />
           </div>
 
           {/* Note / Memo */}
           <div>
-            <label className="text-xs font-semibold text-[#576C60] block mb-1">
-              Note / Reference
+            <label className="text-[11px] font-semibold text-[#576C60] block mb-1 uppercase tracking-wider">
+              Note (Optional)
             </label>
             <input
               type="text"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="e.g. Invoice #APX-8921 or Office Bill"
-              className="w-full h-11 px-4 text-sm rounded-2xl border border-[#E2EAE3] focus:border-[#10B981] focus:ring-3 focus:ring-[#10B981]/15 outline-none"
+              placeholder="e.g. Invoice reference or bill note"
+              className="w-full h-11 px-3 text-base rounded-xl sm:rounded-2xl border border-[#E2EAE3] focus:border-[#10B981] focus:ring-2 focus:ring-[#10B981]/15 outline-none bg-white text-[#112117]"
             />
           </div>
 
           {/* Receipt Proof Upload */}
           <div>
-            <label className="text-xs font-semibold text-[#576C60] block mb-1">
-              Receipt Proof (Cloudflare R2 Bucket: fintech-receipts-secure)
+            <label className="text-[11px] font-semibold text-[#576C60] block mb-1 uppercase tracking-wider">
+              Receipt Proof (Cloudflare R2 Bucket)
             </label>
             <input
               type="file"
@@ -194,32 +195,32 @@ export function CreatePaymentModal({ isOpen, onClose, onSubmit }: CreatePaymentM
             />
             <div
               onClick={() => fileInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${
+              className={`border-2 border-dashed rounded-xl sm:rounded-2xl p-3.5 flex flex-col items-center justify-center cursor-pointer transition-colors ${
                 selectedFile
                   ? 'border-[#10B981] bg-[#EBF7EE]'
                   : 'border-[#CBD9CF] bg-[#F7F9F7] hover:bg-[#EEF4EF]'
               }`}
             >
               {selectedFile ? (
-                <div className="flex items-center gap-2 text-[#059669]">
+                <div className="flex items-center gap-2 text-[#059669] min-w-0">
                   <ShieldCheck className="w-5 h-5 shrink-0" />
-                  <div className="text-left truncate max-w-[240px]">
+                  <div className="text-left truncate">
                     <span className="text-xs font-bold block truncate">
                       {selectedFile.name}
                     </span>
                     <span className="text-[10px] text-[#477558]">
-                      {(selectedFile.size / 1024).toFixed(1)} KB — Ready to upload to R2
+                      {(selectedFile.size / 1024).toFixed(1)} KB — Attached for Cloudflare R2
                     </span>
                   </div>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-1 text-[#62776A]">
-                  <UploadCloud className="w-6 h-6 text-[#10B981]" />
-                  <span className="text-xs font-medium">
-                    Tap to upload SMS screenshot or Bank Slip
+                  <UploadCloud className="w-5 h-5 text-[#10B981]" />
+                  <span className="text-xs font-medium text-center">
+                    Tap to upload SMS screenshot or slip
                   </span>
-                  <span className="text-[10px] text-[#8EA295]">
-                    PNG, JPG, PDF up to 10MB (Encrypted storage)
+                  <span className="text-[9px] text-[#8EA295] text-center">
+                    PNG, JPG, PDF (Stored in fintech-receipts-secure)
                   </span>
                 </div>
               )}
@@ -231,10 +232,10 @@ export function CreatePaymentModal({ isOpen, onClose, onSubmit }: CreatePaymentM
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-12 bg-[#0B2C1F] hover:bg-[#071F15] text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-emerald-float active:scale-[0.98] transition-all"
+              className="w-full h-11 sm:h-12 bg-[#0B2C1F] hover:bg-[#071F15] text-white rounded-xl sm:rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-emerald-float active:scale-[0.98] transition-all"
             >
               {isSubmitting ? (
-                <span className="animate-pulse">Storing & Verifying...</span>
+                <span className="animate-pulse">Storing in Supabase & R2...</span>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 text-[#34D399]" />

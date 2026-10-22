@@ -1,95 +1,13 @@
 import { DashboardMetrics, PaymentTransaction } from '@/types/fintech';
 
-export const MOCK_METRICS: DashboardMetrics = {
-  totalConfirmedBDT: 148520.00,
-  pendingConfirmationBDT: 18450.00,
-  totalSentBDT: 42100.00,
-  totalReceivedBDT: 190620.00,
-  confirmedCount: 38,
-  pendingCount: 4,
-  percentageChangeVsLastMonth: 14.8,
+export const INITIAL_METRICS: DashboardMetrics = {
+  totalConfirmedBDT: 0,
+  pendingConfirmationBDT: 0,
+  totalSentBDT: 0,
+  totalReceivedBDT: 0,
+  confirmedCount: 0,
+  pendingCount: 0,
+  percentageChangeVsLastMonth: 0,
 };
 
-export const MOCK_TRANSACTIONS: PaymentTransaction[] = [
-  {
-    id: 'tx-001',
-    senderName: 'Tanvir Hossain',
-    senderPhone: '01712-345678',
-    recipientName: 'Apex Footwear Ltd',
-    amount: 3450.00,
-    currency: 'BDT',
-    method: 'bkash',
-    trxId: 'BK9A40812X',
-    status: 'verified',
-    date: 'Today',
-    time: '2:15 PM',
-    category: 'Shopping',
-    note: 'Invoice #APX-8921 verified with SMS & OCR match',
-    verifiedAt: '2026-10-22T14:16:00Z',
-    verifiedBy: 'System OCR'
-  },
-  {
-    id: 'tx-002',
-    senderName: 'Morshed Alam (Client)',
-    senderPhone: '01844-998877',
-    recipientName: 'Main Corporate Account',
-    amount: 45000.00,
-    currency: 'BDT',
-    method: 'bank_transfer',
-    trxId: 'EFTN20261022091',
-    status: 'verified',
-    date: 'Oct 21, 2026',
-    time: '11:30 AM',
-    category: 'Income',
-    note: 'Q3 UI/UX Design retainer milestone payment',
-    verifiedAt: '2026-10-21T11:45:00Z',
-    verifiedBy: 'Finance Lead'
-  },
-  {
-    id: 'tx-003',
-    senderName: 'Anika Rahman',
-    senderPhone: '01933-221144',
-    recipientName: 'North End Coffee Roasters',
-    amount: 850.00,
-    currency: 'BDT',
-    method: 'nagad',
-    trxId: 'NG882190LK',
-    status: 'verified',
-    date: 'Oct 20, 2026',
-    time: '4:45 PM',
-    category: 'Food & Drinks',
-    note: 'Team coffee & refreshments receipt attached',
-    verifiedAt: '2026-10-20T17:00:00Z',
-    verifiedBy: 'System OCR'
-  },
-  {
-    id: 'tx-004',
-    senderName: 'Kazi Farhan',
-    senderPhone: '01552-887766',
-    recipientName: 'Pathao Parcel & Rides',
-    amount: 420.00,
-    currency: 'BDT',
-    method: 'rocket',
-    trxId: 'RK990142BZ',
-    status: 'pending',
-    date: 'Oct 20, 2026',
-    time: '9:12 AM',
-    category: 'Transport',
-    note: 'Awaiting merchant clearance receipt photo'
-  },
-  {
-    id: 'tx-005',
-    senderName: 'DESCO Electricity',
-    senderPhone: '16124',
-    recipientName: 'Office Utility Bill',
-    amount: 12850.00,
-    currency: 'BDT',
-    method: 'bkash',
-    trxId: 'BK881726UY',
-    status: 'pending',
-    date: 'Oct 19, 2026',
-    time: '1:20 PM',
-    category: 'Bills & Utilities',
-    note: 'Meter #892839 - pending verification with DESCO portal'
-  }
-];
+export const INITIAL_TRANSACTIONS: PaymentTransaction[] = [];

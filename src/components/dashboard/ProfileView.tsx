@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Shield, Database, Cloud, Lock, Bell, Moon, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Shield, Database, Cloud, Lock, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 
 export interface ProfileViewProps {
@@ -12,27 +12,27 @@ export function ProfileView({ onShowSplashAgain }: ProfileViewProps) {
   return (
     <div className="flex flex-col min-h-full bg-[#F5F7F3] pb-24">
       {/* Header */}
-      <div className="px-5 pt-4 pb-3">
-        <h1 className="text-xl font-bold text-[#112117] tracking-tight">
-          Account & Infrastructure
+      <div className="px-4 sm:px-5 pt-3 sm:pt-4 pb-2.5">
+        <h1 className="text-lg sm:text-xl font-bold text-[#112117] tracking-tight">
+          System & Settings
         </h1>
-        <p className="text-xs text-[#62776A] mt-0.5">
-          Bangladesh Fintech Compliance & Verification
+        <p className="text-[11px] sm:text-xs text-[#62776A] mt-0.5">
+          Bangladesh Fintech Compliance & Infrastructure
         </p>
       </div>
 
       {/* User Card */}
-      <div className="px-5 mt-2">
-        <div className="bg-white rounded-[26px] p-5 border border-[#E4EBE5] shadow-premium-card flex items-center gap-4">
-          <Avatar name="Shakhawat Hossain" size="lg" />
+      <div className="px-4 sm:px-5 mt-2">
+        <div className="bg-white rounded-2xl sm:rounded-[26px] p-4 sm:p-5 border border-[#E4EBE5] shadow-sm flex items-center gap-3.5">
+          <Avatar name="Finance Lead" size="md" />
           <div className="flex-1 min-w-0">
-            <h2 className="text-base font-bold text-[#112117] truncate">
-              Lead Finance Officer
+            <h2 className="text-sm sm:text-base font-bold text-[#112117] truncate">
+              Finance Officer
             </h2>
-            <p className="text-xs text-[#6B7F73]">
-              fintech-admin@bangladesh.app
+            <p className="text-xs text-[#6B7F73] truncate">
+              admin@fintech-receipts.bd
             </p>
-            <div className="mt-1.5 inline-flex items-center gap-1 bg-[#EBF7EE] text-[#059669] px-2 py-0.5 rounded-full text-[10px] font-bold border border-[#CEEED6]">
+            <div className="mt-1 inline-flex items-center gap-1 bg-[#EBF7EE] text-[#059669] px-2 py-0.5 rounded-full text-[10px] font-bold border border-[#CEEED6]">
               <CheckCircle2 className="w-3 h-3" />
               <span>Verified SuperAdmin</span>
             </div>
@@ -41,40 +41,40 @@ export function ProfileView({ onShowSplashAgain }: ProfileViewProps) {
       </div>
 
       {/* Infrastructure Status Panel */}
-      <div className="px-5 mt-4">
-        <div className="bg-white rounded-[26px] p-5 border border-[#E4EBE5] shadow-sm space-y-3.5">
-          <h3 className="text-xs font-bold text-[#6B7F73] uppercase tracking-wider">
-            Connected Infrastructure (Phase 1 Audit)
+      <div className="px-4 sm:px-5 mt-4">
+        <div className="bg-white rounded-2xl sm:rounded-[26px] p-4 sm:p-5 border border-[#E4EBE5] shadow-sm space-y-3">
+          <h3 className="text-[11px] font-bold text-[#6B7F73] uppercase tracking-wider">
+            Connected Infrastructure Status
           </h3>
 
           {/* Supabase Status */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-[#E8F5EE] flex items-center justify-center text-[#059669]">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#E8F5EE] flex items-center justify-center text-[#059669] shrink-0">
                 <Database className="w-4 h-4" />
               </div>
-              <div>
-                <div className="text-xs font-bold text-[#112117]">Self-Hosted Supabase</div>
-                <div className="text-[10px] text-[#71867A]">Kong Gateway (Isolated Schema Ready)</div>
+              <div className="min-w-0">
+                <div className="text-xs font-bold text-[#112117] truncate">Self-Hosted Supabase</div>
+                <div className="text-[10px] text-[#71867A] truncate">Kong Gateway (ft_* tables active)</div>
               </div>
             </div>
-            <span className="text-[11px] font-bold text-[#059669] bg-[#EBF7EE] px-2 py-0.5 rounded-md border border-[#CEEED6]">
+            <span className="text-[10px] sm:text-[11px] font-bold text-[#059669] bg-[#EBF7EE] px-2 py-0.5 rounded-md border border-[#CEEED6] shrink-0">
               Online
             </span>
           </div>
 
           {/* Cloudflare R2 Status */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-[#FFF6E7] flex items-center justify-center text-[#D97706]">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#FFF6E7] flex items-center justify-center text-[#D97706] shrink-0">
                 <Cloud className="w-4 h-4" />
               </div>
-              <div>
-                <div className="text-xs font-bold text-[#112117]">Cloudflare R2 Storage</div>
-                <div className="text-[10px] text-[#71867A]">Dedicated Secure Bucket Target</div>
+              <div className="min-w-0">
+                <div className="text-xs font-bold text-[#112117] truncate">Cloudflare R2 Bucket</div>
+                <div className="text-[10px] text-[#71867A] truncate">fintech-receipts-secure</div>
               </div>
             </div>
-            <span className="text-[11px] font-bold text-[#059669] bg-[#EBF7EE] px-2 py-0.5 rounded-md border border-[#CEEED6]">
+            <span className="text-[10px] sm:text-[11px] font-bold text-[#059669] bg-[#EBF7EE] px-2 py-0.5 rounded-md border border-[#CEEED6] shrink-0">
               Verified
             </span>
           </div>
@@ -82,14 +82,15 @@ export function ProfileView({ onShowSplashAgain }: ProfileViewProps) {
       </div>
 
       {/* App Preferences */}
-      <div className="px-5 mt-4">
-        <div className="bg-white rounded-[26px] p-2 border border-[#E4EBE5] shadow-sm divide-y divide-[#EEF3EF]">
+      <div className="px-4 sm:px-5 mt-4">
+        <div className="bg-white rounded-2xl sm:rounded-[26px] p-1.5 border border-[#E4EBE5] shadow-sm divide-y divide-[#EEF3EF]">
           <button
+            type="button"
             onClick={onShowSplashAgain}
-            className="w-full p-3.5 flex items-center justify-between hover:bg-[#F7F9F7] rounded-2xl transition-colors text-left"
+            className="w-full p-3 flex items-center justify-between hover:bg-[#F7F9F7] rounded-xl transition-colors text-left"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-[#F0F5F1] flex items-center justify-center text-[#1E3A2B]">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-[#F0F5F1] flex items-center justify-center text-[#1E3A2B] shrink-0">
                 <Shield className="w-4 h-4" />
               </div>
               <span className="text-xs font-semibold text-[#112117]">
@@ -100,11 +101,12 @@ export function ProfileView({ onShowSplashAgain }: ProfileViewProps) {
           </button>
 
           <button
-            onClick={() => alert('Biometric FaceID / TouchID protection is enabled.')}
-            className="w-full p-3.5 flex items-center justify-between hover:bg-[#F7F9F7] rounded-2xl transition-colors text-left"
+            type="button"
+            onClick={() => alert('Biometric protection is enabled for receipt approvals.')}
+            className="w-full p-3 flex items-center justify-between hover:bg-[#F7F9F7] rounded-xl transition-colors text-left"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-[#F0F5F1] flex items-center justify-center text-[#1E3A2B]">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-[#F0F5F1] flex items-center justify-center text-[#1E3A2B] shrink-0">
                 <Lock className="w-4 h-4" />
               </div>
               <span className="text-xs font-semibold text-[#112117]">

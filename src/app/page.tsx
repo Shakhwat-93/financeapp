@@ -13,20 +13,20 @@ import { ReceiptsView } from '@/components/dashboard/ReceiptsView';
 import { ProfileView } from '@/components/dashboard/ProfileView';
 import { CreatePaymentModal } from '@/components/dashboard/CreatePaymentModal';
 import { TransactionDetailModal } from '@/components/dashboard/TransactionDetailModal';
-import { MOCK_METRICS, MOCK_TRANSACTIONS } from '@/lib/mockData';
+import { INITIAL_METRICS, INITIAL_TRANSACTIONS } from '@/lib/mockData';
 import { DashboardMetrics, PaymentTransaction } from '@/types/fintech';
 import { supabase } from '@/lib/supabase/client';
 
 export default function Home() {
   const [showSplash, setShowSplash] = useState(false);
   const [currentTab, setCurrentTab] = useState<NavTab>('home');
-  const [transactions, setTransactions] = useState<PaymentTransaction[]>(MOCK_TRANSACTIONS);
-  const [metrics, setMetrics] = useState<DashboardMetrics>(MOCK_METRICS);
+  const [transactions, setTransactions] = useState<PaymentTransaction[]>(INITIAL_TRANSACTIONS);
+  const [metrics, setMetrics] = useState<DashboardMetrics>(INITIAL_METRICS);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedTx, setSelectedTx] = useState<PaymentTransaction | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Map database row to PaymentTransaction
+  // Map database row from Supabase to frontend model
   const mapDbRow = (row: any): PaymentTransaction => {
     const d = new Date(row.created_at);
     return {
@@ -50,16 +50,16 @@ export default function Home() {
 
   const loadData = useCallback(async () => {
     try {
-      // 1. Fetch live payments
+      // 1. Fetch live payments from Supabase
       const resPayments = await fetch('/api/payments');
       if (resPayments.ok) {
         const { payments } = await resPayments.json();
-        if (payments && payments.length > 0) {
+        if (payments) {
           setTransactions(payments.map(mapDbRow));
         }
       }
 
-      // 2. Fetch live metrics
+      // 2. Fetch live metrics from Supabase
       const resMetrics = await fetch('/api/metrics');
       if (resMetrics.ok) {
         const { metrics: m } = await resMetrics.json();
@@ -68,7 +68,7 @@ export default function Home() {
         }
       }
     } catch (err) {
-      console.warn('Using offline mock fallback:', err);
+      console.warn('Network error fetching live data:', err);
     } finally {
       setIsLoading(false);
     }
@@ -77,10 +77,10 @@ export default function Home() {
   useEffect(() => {
     loadData();
 
-    // Setup Supabase Realtime listener
+    // Setup Supabase Realtime listener on ft_payments
     try {
       const channel = supabase
-        .channel('ft_payments_live')
+        .channel('ft_payments_live_sync')
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'ft_payments' },
@@ -117,7 +117,7 @@ export default function Home() {
           amount: newPayment.amount,
           recipientName: newPayment.recipientName,
           note: newPayment.note,
-          status: 'pending',
+          status: 'verified', // Set verified for instant verified balance demonstration
         }),
       });
 
@@ -162,7 +162,7 @@ export default function Home() {
             <div className="flex flex-col">
               <TopHeader
                 onSearchClick={() => setCurrentTab('receipts')}
-                onNotificationClick={() => alert('Infrastructure status: VPS Supabase + Cloudflare R2 connected & active.')}
+                onNotificationClick={() => alert('Infrastructure status: Supabase VPS & Cloudflare R2 connected and active.')}
               />
               <BalanceCard
                 metrics={metrics}
@@ -179,12 +179,17 @@ export default function Home() {
                 transactions={transactions}
                 onSelectTransaction={(tx) => setSelectedTx(tx)}
                 onSeeAll={() => setCurrentTab('receipts')}
+                onCreateNew={() => setIsCreateOpen(true)}
               />
             </div>
           )}
 
           {currentTab === 'analytics' && (
-            <AnalyticsView onBack={() => setCurrentTab('home')} />
+            <AnalyticsView
+              onBack={() => setCurrentTab('home')}
+              transactions={transactions}
+              metrics={metrics}
+            />
           )}
 
           {currentTab === 'receipts' && (

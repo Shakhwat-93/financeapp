@@ -24,6 +24,8 @@ export function getBucketName() {
   return process.env.R2_BUCKET_NAME || 'fintech-receipts-secure';
 }
 
+export const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || 'fintech-receipts-secure';
+
 export async function uploadReceiptToR2(buffer: Buffer, key: string, contentType: string) {
   const client = getR2Client();
   const bucket = getBucketName();
