@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadReceiptToR2, getSignedReceiptUrl, R2_BUCKET_NAME } from '@/lib/r2/client';
-import { getServiceSupabase } from '@/lib/supabase/server';
+import { createClient, getServiceSupabase } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
+    const userClient = await createClient();
+    const { data: { user }, error: authError } = await userClient.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized: Please sign in' }, { status: 401 });
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
     const paymentId = formData.get('paymentId') as string | null;
@@ -17,20 +24,18 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Generate safe storage path in R2
+    // Generate safe storage path in R2 namespaced by user ID
     const now = new Date();
     const yyyy = now.getFullYear();
     const mm = String(now.getMonth() + 1).padStart(2, '0');
     const randomHex = Math.random().toString(36).substring(2, 10);
     const safeName = file.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
-    const storageKey = `receipts/${yyyy}-${mm}/${randomHex}_${safeName}`;
+    const storageKey = `receipts/${user.id}/${yyyy}-${mm}/${randomHex}_${safeName}`;
 
     // 1. Upload to dedicated Cloudflare R2 private bucket
     await uploadReceiptToR2(buffer, storageKey, file.type || 'application/octet-stream');
 
     // 2. Simulated Smart OCR Engine for Bangladesh MFS (bKash, Nagad, Rocket, Bank SMS)
-    // In production, this pipes to an OCR service (Tesseract / AWS Textract / Cloud Vision)
-    // We simulate OCR detection based on file metadata and text simulation
     let ocrTrxId = claimedTrxId || `BK${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
     let ocrAmount = claimedAmount ? parseFloat(claimedAmount) : 1500.00;
     let ocrConfidence = 96.5;
@@ -40,14 +45,15 @@ export async function POST(request: NextRequest) {
       ocrMatchStatus = 'mismatch';
     }
 
-    // 3. Insert record into Supabase ft_receipts if paymentId exists
+    // 3. Insert record into Supabase ft_receipts
     let receiptRecord = null;
     if (paymentId) {
-      const supabase = getServiceSupabase();
-      const { data, error } = await supabase
+      const serviceDb = getServiceSupabase();
+      const { data, error } = await serviceDb
         .from('ft_receipts')
         .insert({
           payment_id: paymentId,
+          user_id: user.id,
           storage_bucket: R2_BUCKET_NAME,
           storage_path: storageKey,
           file_name: file.name,
@@ -64,12 +70,12 @@ export async function POST(request: NextRequest) {
 
       if (!error) {
         receiptRecord = data;
-        // Also log into ft_audit_trail
-        await supabase.from('ft_audit_trail').insert({
+        await serviceDb.from('ft_audit_trail').insert({
           payment_id: paymentId,
+          user_id: user.id,
           action: 'receipt_uploaded',
           actor_type: 'system',
-          actor_name: 'OCR Verification Engine',
+          actor_name: 'OCR Engine',
           details: {
             storageKey,
             ocrMatchStatus,
@@ -79,7 +85,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Generate short-lived signed URL for secure viewing
     const signedViewUrl = await getSignedReceiptUrl(storageKey, 3600);
 
     return NextResponse.json({

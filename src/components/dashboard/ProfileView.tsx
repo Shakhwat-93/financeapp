@@ -1,14 +1,33 @@
 'use client';
 
 import React from 'react';
-import { Shield, Database, Cloud, Lock, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Shield, Database, Cloud, Lock, ChevronRight, CheckCircle2, LogOut } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
+import { supabase } from '@/lib/supabase/client';
 
 export interface ProfileViewProps {
   onShowSplashAgain: () => void;
+  userEmail?: string;
+  userName?: string;
 }
 
-export function ProfileView({ onShowSplashAgain }: ProfileViewProps) {
+export function ProfileView({ onShowSplashAgain, userEmail, userName }: ProfileViewProps) {
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      router.refresh();
+      router.push('/login');
+    } catch (err) {
+      console.error('Sign out error:', err);
+    }
+  };
+
+  const displayName = userName || userEmail?.split('@')[0] || 'Finance User';
+  const displayEmail = userEmail || 'user@fintech.bd';
+
   return (
     <div className="flex flex-col min-h-full bg-[#F5F7F3] pb-24">
       {/* Header */}
@@ -17,24 +36,24 @@ export function ProfileView({ onShowSplashAgain }: ProfileViewProps) {
           System & Settings
         </h1>
         <p className="text-[11px] sm:text-xs text-[#62776A] mt-0.5">
-          Bangladesh Fintech Compliance & Infrastructure
+          Bangladesh Fintech Compliance & Account
         </p>
       </div>
 
       {/* User Card */}
       <div className="px-4 sm:px-5 mt-2">
         <div className="bg-white rounded-2xl sm:rounded-[26px] p-4 sm:p-5 border border-[#E4EBE5] shadow-sm flex items-center gap-3.5">
-          <Avatar name="Finance Lead" size="md" />
+          <Avatar name={displayName} size="md" />
           <div className="flex-1 min-w-0">
             <h2 className="text-sm sm:text-base font-bold text-[#112117] truncate">
-              Finance Officer
+              {displayName}
             </h2>
             <p className="text-xs text-[#6B7F73] truncate">
-              admin@fintech-receipts.bd
+              {displayEmail}
             </p>
             <div className="mt-1 inline-flex items-center gap-1 bg-[#EBF7EE] text-[#059669] px-2 py-0.5 rounded-full text-[10px] font-bold border border-[#CEEED6]">
               <CheckCircle2 className="w-3 h-3" />
-              <span>Verified SuperAdmin</span>
+              <span>Verified Account</span>
             </div>
           </div>
         </div>
@@ -55,11 +74,11 @@ export function ProfileView({ onShowSplashAgain }: ProfileViewProps) {
               </div>
               <div className="min-w-0">
                 <div className="text-xs font-bold text-[#112117] truncate">Self-Hosted Supabase</div>
-                <div className="text-[10px] text-[#71867A] truncate">Kong Gateway (ft_* tables active)</div>
+                <div className="text-[10px] text-[#71867A] truncate">Kong Gateway (RLS User Isolation)</div>
               </div>
             </div>
             <span className="text-[10px] sm:text-[11px] font-bold text-[#059669] bg-[#EBF7EE] px-2 py-0.5 rounded-md border border-[#CEEED6] shrink-0">
-              Online
+              Active
             </span>
           </div>
 
@@ -102,7 +121,7 @@ export function ProfileView({ onShowSplashAgain }: ProfileViewProps) {
 
           <button
             type="button"
-            onClick={() => alert('Biometric protection is enabled for receipt approvals.')}
+            onClick={() => alert('Biometric authentication is active.')}
             className="w-full p-3 flex items-center justify-between hover:bg-[#F7F9F7] rounded-xl transition-colors text-left"
           >
             <div className="flex items-center gap-2.5">
@@ -114,6 +133,23 @@ export function ProfileView({ onShowSplashAgain }: ProfileViewProps) {
               </span>
             </div>
             <ChevronRight className="w-4 h-4 text-[#8BA092]" />
+          </button>
+
+          {/* Working Sign Out Action */}
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="w-full p-3 flex items-center justify-between hover:bg-red-50/60 rounded-xl transition-colors text-left text-red-600 group"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-red-100/60 flex items-center justify-center text-red-600 shrink-0">
+                <LogOut className="w-4 h-4" />
+              </div>
+              <span className="text-xs font-bold text-red-600">
+                Sign Out of Account
+              </span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-red-400 group-hover:text-red-600" />
           </button>
         </div>
       </div>
