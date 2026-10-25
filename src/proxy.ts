@@ -48,6 +48,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/auth/') ||
     pathname.startsWith('/api/auth/');
 
+  const isSupabaseProxy = pathname.startsWith('/api/supabase-proxy');
+
   // If user is already authenticated and visits login/register, send to dashboard
   if (user && isAuthRoute) {
     const rawReturnTo = request.nextUrl.searchParams.get('returnTo');
@@ -59,7 +61,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // If user is NOT authenticated and visits a protected route
-  if (!user && !isAuthRoute && !isApiAuthCallback) {
+  if (!user && !isAuthRoute && !isApiAuthCallback && !isSupabaseProxy) {
     // If requesting protected API
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Unauthorized: Authentication required' }, { status: 401 });

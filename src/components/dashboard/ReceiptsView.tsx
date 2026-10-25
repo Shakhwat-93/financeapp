@@ -62,6 +62,7 @@ export function ReceiptsView({
           <Search className="w-4 h-4 text-[#8BA092] absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
+            autoComplete="off"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by TrxID, sender, or merchant..."

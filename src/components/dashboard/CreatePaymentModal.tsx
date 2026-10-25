@@ -129,6 +129,7 @@ export function CreatePaymentModal({ isOpen, onClose, onSubmit }: CreatePaymentM
                 type="number"
                 step="any"
                 required
+                autoComplete="off"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
@@ -145,6 +146,7 @@ export function CreatePaymentModal({ isOpen, onClose, onSubmit }: CreatePaymentM
             <input
               type="text"
               required
+              autoComplete="off"
               value={trxId}
               onChange={(e) => setTrxId(e.target.value.toUpperCase())}
               placeholder="e.g. BK9A40812X or Bank Ref"
@@ -160,6 +162,7 @@ export function CreatePaymentModal({ isOpen, onClose, onSubmit }: CreatePaymentM
             <input
               type="text"
               required
+              autoComplete="off"
               value={recipientName}
               onChange={(e) => setRecipientName(e.target.value)}
               placeholder="e.g. Apex Footwear / Personal"
@@ -174,6 +177,7 @@ export function CreatePaymentModal({ isOpen, onClose, onSubmit }: CreatePaymentM
             </label>
             <input
               type="text"
+              autoComplete="off"
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="e.g. Invoice reference or bill note"
