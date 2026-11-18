@@ -99,12 +99,18 @@ export async function fetchGoogleSheets(action: string, payload: any = {}): Prom
       cache: 'no-store',
     });
 
+    const rawText = await res.text();
     if (!res.ok) {
-      console.warn(`[Google Sheets WebApp HTTP ${res.status}]`, await res.text());
+      console.warn(`[Google Sheets WebApp HTTP ${res.status}]`, rawText.slice(0, 300));
       return null;
     }
 
-    return await res.json();
+    try {
+      return JSON.parse(rawText);
+    } catch {
+      console.warn('[Google Sheets WebApp returned non-JSON/HTML]:', rawText.slice(0, 300));
+      return null;
+    }
   } catch (error) {
     console.error('[Google Sheets API Error]:', error);
     return null;
