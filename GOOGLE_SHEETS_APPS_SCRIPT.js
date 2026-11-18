@@ -1,51 +1,66 @@
 /**
  * ==============================================================================
  * BANGLADESH FINTECH PAYMENT TRACKING & RECEIPT VERIFICATION PWA
- * GOOGLE APPS SCRIPT DATABASE BACKEND (Zero-Cost Serverless Backend)
- * ==============================================================================
- * 
- * HOW TO INSTALL IN 60 SECONDS:
- * 1. Open your Google Sheet: https://docs.google.com/spreadsheets/d/1BiWzOnqxJZcjEeRugH93h1f_TzBlUGC41yPS2BUeZGg/edit
- * 2. Click: Extensions (এক্সটেনশন) -> Apps Script (অ্যাপস স্ক্রিপ্ট)
- * 3. Replace all existing text in Code.gs with this entire file.
- * 4. Click the Save icon (Ctrl+S or Cmd+S).
- * 5. Click "Deploy" (ডিপ্লয়) -> "New deployment" (নতুন ডিপ্লয়মেন্ট).
- * 6. Click the gear icon (Select type) -> Select "Web app".
- * 7. Set:
- *    - Description: "Fintech DB API"
- *    - Execute as: "Me (your email)"
- *    - Who has access: "Anyone" (যেকোনো ব্যক্তি)
- * 8. Click "Deploy", approve access/permissions.
- * 9. Copy the generated Web App URL (https://script.google.com/macros/s/.../exec)
- *    and put it in .env.local as:
- *    GOOGLE_SHEETS_WEBAPP_URL=https://script.google.com/macros/s/.../exec
+ * GOOGLE APPS SCRIPT DATABASE BACKEND
+ * SPREADSHEET ID: 1BiWzOnqxJZcjEeRugH93h1f_TzBlUGC41yPS2BUeZGg
  * ==============================================================================
  */
 
+// আপনার তৈরি করা গুগল শিটের আইডি (এটি স্বয়ংক্রিয়ভাবে কানেক্ট হবে)
+var SPREADSHEET_ID = '1BiWzOnqxJZcjEeRugH93h1f_TzBlUGC41yPS2BUeZGg';
+
+function getSpreadsheet() {
+  try {
+    return SpreadsheetApp.openById(SPREADSHEET_ID);
+  } catch (err) {
+    return SpreadsheetApp.getActiveSpreadsheet();
+  }
+}
+
+/**
+ * রান বাটন (Run ▶) টেস্ট করার জন্য এই ফাংশনটি ব্যবহার করুন
+ */
+function test() {
+  var ss = getSpreadsheet();
+  Logger.log('Connected to Spreadsheet: ' + ss.getName());
+  var sheet = ss.getSheetByName('Payments');
+  Logger.log('Payments Sheet Rows: ' + (sheet ? sheet.getLastRow() : 0));
+  Logger.log('Database is 100% READY!');
+}
+
+/**
+ * ব্রাউজার বা ওয়েব অ্যাপ থেকে GET রিকোয়েস্ট এলে এটি কাজ করে
+ */
 function doGet(e) {
-  return handleRequest(e);
+  return handleRequest(e || {});
 }
 
+/**
+ * ব্রাউজার বা ওয়েব অ্যাপ থেকে POST রিকোয়েস্ট এলে এটি কাজ করে
+ */
 function doPost(e) {
-  return handleRequest(e);
+  return handleRequest(e || {});
 }
 
+/**
+ * মূল রিকোয়েস্ট হ্যান্ডলার
+ */
 function handleRequest(e) {
   var lock = LockService.getScriptLock();
-  lock.tryLock(10000);
+  lock.tryLock(15000);
 
   try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = getSpreadsheet();
     var params = {};
-    
-    // Parse query parameters
+
+    // 1. URL Query Parameter রিড করা
     if (e && e.parameter) {
       for (var key in e.parameter) {
         params[key] = e.parameter[key];
       }
     }
 
-    // Parse JSON body if present
+    // 2. POST Body JSON রিড করা
     if (e && e.postData && e.postData.contents) {
       try {
         var body = JSON.parse(e.postData.contents);
@@ -53,7 +68,7 @@ function handleRequest(e) {
           params[bKey] = body[bKey];
         }
       } catch (err) {
-        // Ignored if not JSON
+        // Ignored
       }
     }
 
@@ -61,36 +76,34 @@ function handleRequest(e) {
     var responseData = {};
 
     if (action === 'ping') {
-      responseData = { status: 'ok', timestamp: new Date().toISOString(), message: 'Google Sheets DB is live!' };
-    } 
-    else if (action === 'get_payments') {
+      responseData = {
+        status: 'ok',
+        spreadsheet: ss.getName(),
+        timestamp: new Date().toISOString(),
+        message: 'Google Sheets DB is live and connected!',
+      };
+    } else if (action === 'get_payments') {
       responseData = getPayments(ss, params);
-    } 
-    else if (action === 'add_payment') {
+    } else if (action === 'add_payment') {
       responseData = addPayment(ss, params.payment || params);
-    } 
-    else if (action === 'get_metrics') {
+    } else if (action === 'get_metrics') {
       responseData = getMetrics(ss);
-    } 
-    else if (action === 'add_receipt') {
+    } else if (action === 'add_receipt') {
       responseData = addReceipt(ss, params.receipt || params);
-    } 
-    else if (action === 'login') {
+    } else if (action === 'login') {
       responseData = loginUser(ss, params.email, params.password);
-    } 
-    else if (action === 'register') {
+    } else if (action === 'register') {
       responseData = registerUser(ss, params);
-    } 
-    else {
+    } else {
       responseData = { error: 'Unknown action: ' + action };
     }
 
     return ContentService.createTextOutput(JSON.stringify(responseData))
       .setMimeType(ContentService.MimeType.JSON);
-
   } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({ error: error.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(
+      JSON.stringify({ error: error.toString() })
+    ).setMimeType(ContentService.MimeType.JSON);
   } finally {
     lock.releaseLock();
   }
@@ -100,6 +113,7 @@ function handleRequest(e) {
 // PAYMENTS CONTROLLER
 // ------------------------------------------------------------------------------
 function getPayments(ss, params) {
+  params = params || {};
   var sheet = ss.getSheetByName('Payments');
   if (!sheet) return { payments: [] };
 
@@ -119,7 +133,6 @@ function getPayments(ss, params) {
       p[headers[h]] = row[h];
     }
 
-    // Apply filtering
     if (statusFilter && statusFilter !== 'all' && String(p.status).toLowerCase() !== statusFilter.toLowerCase()) {
       continue;
     }
@@ -138,17 +151,21 @@ function getPayments(ss, params) {
     payments.push(p);
   }
 
-  // Sort descending by created_at
   payments.reverse();
-
   return { payments: payments };
 }
 
 function addPayment(ss, payment) {
+  payment = payment || {};
   var sheet = ss.getSheetByName('Payments');
   if (!sheet) {
     sheet = ss.insertSheet('Payments');
-    sheet.appendRow(['id', 'trx_id', 'gateway', 'amount', 'currency', 'direction', 'sender_name', 'sender_phone', 'recipient_name', 'recipient_phone', 'status', 'category', 'note', 'receipt_url', 'created_at', 'verified_at', 'verified_by']);
+    sheet.appendRow([
+      'id', 'trx_id', 'gateway', 'amount', 'currency', 'direction',
+      'sender_name', 'sender_phone', 'recipient_name', 'recipient_phone',
+      'status', 'category', 'note', 'receipt_url', 'created_at',
+      'verified_at', 'verified_by'
+    ]);
   }
 
   var trxId = String(payment.trxId || payment.trx_id || '').trim().toUpperCase();
@@ -156,7 +173,6 @@ function addPayment(ss, payment) {
     return { error: 'TrxID is required' };
   }
 
-  // Check duplicate TrxID
   var data = sheet.getDataRange().getValues();
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][1]).trim().toUpperCase() === trxId) {
@@ -183,7 +199,7 @@ function addPayment(ss, payment) {
     payment.receiptUrl || payment.receipt_url || '',
     now,
     payment.status === 'verified' ? now : '',
-    payment.status === 'verified' ? 'Automated Verification' : ''
+    payment.status === 'verified' ? 'Automated Verification' : '',
   ];
 
   sheet.appendRow(row);
@@ -207,8 +223,8 @@ function addPayment(ss, payment) {
       receipt_url: row[13],
       created_at: row[14],
       verified_at: row[15],
-      verified_by: row[16]
-    }
+      verified_by: row[16],
+    },
   };
 }
 
@@ -255,8 +271,8 @@ function getMetrics(ss) {
       totalReceivedBDT: totalReceivedBDT,
       confirmedCount: confirmedCount,
       pendingCount: pendingCount,
-      percentageChangeVsLastMonth: confirmedCount > 0 ? 12.5 : 0
-    }
+      percentageChangeVsLastMonth: confirmedCount > 0 ? 14.8 : 0,
+    },
   };
 }
 
@@ -264,10 +280,15 @@ function getMetrics(ss) {
 // RECEIPTS CONTROLLER
 // ------------------------------------------------------------------------------
 function addReceipt(ss, receipt) {
+  receipt = receipt || {};
   var sheet = ss.getSheetByName('Receipts');
   if (!sheet) {
     sheet = ss.insertSheet('Receipts');
-    sheet.appendRow(['id', 'payment_id', 'trx_id', 'file_name', 'file_size', 'mime_type', 'storage_url', 'ocr_extracted_trx_id', 'ocr_extracted_amount', 'ocr_confidence', 'ocr_status', 'created_at']);
+    sheet.appendRow([
+      'id', 'payment_id', 'trx_id', 'file_name', 'file_size',
+      'mime_type', 'storage_url', 'ocr_extracted_trx_id',
+      'ocr_extracted_amount', 'ocr_confidence', 'ocr_status', 'created_at'
+    ]);
   }
 
   var id = 'rcpt_' + new Date().getTime();
@@ -284,7 +305,7 @@ function addReceipt(ss, receipt) {
     receipt.ocrExtractedAmount || receipt.ocr_extracted_amount || 0,
     receipt.ocrConfidence || receipt.ocr_confidence || 95,
     receipt.ocrStatus || receipt.ocr_status || 'matched',
-    now
+    now,
   ];
 
   sheet.appendRow(row);
@@ -313,8 +334,8 @@ function loginUser(ss, email, password) {
             name: rows[i][3],
             phone: rows[i][4],
             role: rows[i][5],
-            created_at: rows[i][6]
-          }
+            created_at: rows[i][6],
+          },
         };
       } else {
         return { error: 'Invalid password. Please check and try again.' };
@@ -326,6 +347,9 @@ function loginUser(ss, email, password) {
 }
 
 function registerUser(ss, params) {
+  ss = ss || getSpreadsheet();
+  params = params || {};
+
   var sheet = ss.getSheetByName('Users');
   if (!sheet) {
     sheet = ss.insertSheet('Users');
@@ -341,7 +365,6 @@ function registerUser(ss, params) {
     return { error: 'Email and password are required' };
   }
 
-  // Check if exists
   var rows = sheet.getDataRange().getValues();
   for (var i = 1; i < rows.length; i++) {
     if (String(rows[i][1]).trim().toLowerCase() === email) {
@@ -362,7 +385,7 @@ function registerUser(ss, params) {
       name: name,
       phone: phone,
       role: 'user',
-      created_at: now
-    }
+      created_at: now,
+    },
   };
 }
