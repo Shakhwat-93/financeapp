@@ -139,7 +139,7 @@ export function TransactionList({
             No Transactions Yet
           </h3>
           <p className="text-xs text-[#6B7F73] mt-1 max-w-xs mx-auto">
-            Your live Supabase ledger is clean and ready. Tap below to log your first payment or upload a receipt slip.
+            Your live Google Sheets ledger is clean and ready. Tap below to log your first payment or upload a receipt slip.
           </p>
           {onCreateNew && (
             <button

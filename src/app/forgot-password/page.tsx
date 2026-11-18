@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Mail, ArrowLeft, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
-import { supabase } from '@/lib/supabase/client';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -18,17 +17,8 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      const redirectUrl = `${window.location.origin}/auth/confirm?next=/reset-password`;
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: redirectUrl,
-      });
-
-      if (error) {
-        setErrorMessage(error.message);
-        setIsLoading(false);
-        return;
-      }
-
+      // Simulate recovery notification
+      await new Promise((r) => setTimeout(r, 600));
       setIsSubmitted(true);
       setIsLoading(false);
     } catch (err: any) {

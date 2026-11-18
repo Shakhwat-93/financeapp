@@ -17,7 +17,6 @@ import { TransactionDetailModal } from '@/components/dashboard/TransactionDetail
 import { Skeleton } from '@/components/ui/Skeleton';
 import { INITIAL_METRICS, INITIAL_TRANSACTIONS } from '@/lib/mockData';
 import { DashboardMetrics, PaymentTransaction } from '@/types/fintech';
-import { supabase } from '@/lib/supabase/client';
 
 export default function Home() {
   const [showSplash, setShowSplash] = useState(false);
@@ -29,7 +28,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
 
-  // Map database row from Supabase to frontend model
+  // Map database row from Google Sheets to frontend model
   const mapDbRow = (row: any): PaymentTransaction => {
     const d = new Date(row.created_at);
     return {
@@ -53,22 +52,32 @@ export default function Home() {
 
   const loadData = useCallback(async () => {
     try {
-      // 1. Get authenticated user
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      if (currentUser) {
-        setUser(currentUser);
-      }
-
-      // 2. Fetch live payments strictly isolated to this user
-      const resPayments = await fetch('/api/payments');
-      if (resPayments.ok) {
-        const { payments } = await resPayments.json();
-        if (payments) {
-          setTransactions(payments.map(mapDbRow));
+      // 1. Get authenticated user profile
+      const resUser = await fetch('/api/auth/me');
+      if (resUser.ok) {
+        const { user: currentUser } = await resUser.json();
+        if (currentUser) {
+          setUser(currentUser);
         }
       }
 
-      // 3. Fetch live metrics strictly isolated to this user
+      // 2. Fetch live payments from Google Sheets
+      const resPayments = await fetch('/api/payments');
+      if (resPayments.ok) {
+        const { payments } = await resPayments.json();
+        if (payments && Array.isArray(payments)) {
+          // If already mapped PaymentTransaction or raw rows
+          setTransactions(
+            payments.map((p) => ({
+              ...p,
+              date: p.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+              time: p.time || new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+            }))
+          );
+        }
+      }
+
+      // 3. Fetch live metrics from Google Sheets
       const resMetrics = await fetch('/api/metrics');
       if (resMetrics.ok) {
         const { metrics: m } = await resMetrics.json();
@@ -86,25 +95,12 @@ export default function Home() {
   useEffect(() => {
     loadData();
 
-    // Setup Supabase Realtime listener on ft_payments
-    try {
-      const channel = supabase
-        .channel('ft_payments_live_sync')
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'ft_payments' },
-          () => {
-            loadData();
-          }
-        )
-        .subscribe();
+    // Auto sync with Google Sheet ledger every 12 seconds
+    const interval = setInterval(() => {
+      loadData();
+    }, 12000);
 
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    } catch (e) {
-      console.error('Realtime subscription error:', e);
-    }
+    return () => clearInterval(interval);
   }, [loadData]);
 
   const handleCreatePayment = async (newPayment: {
@@ -160,7 +156,7 @@ export default function Home() {
     }
   };
 
-  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+  const userName = user?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
 
   return (
     <MobileContainer>
@@ -209,7 +205,7 @@ export default function Home() {
                       greeting={`Good day, ${userName}`}
                       subtitle="Payment Tracking & Receipt Verification"
                       onSearchClick={() => setCurrentTab('receipts')}
-                      onNotificationClick={() => alert('Infrastructure status: Supabase VPS & Cloudflare R2 active.')}
+                      onNotificationClick={() => alert('Infrastructure status: Google Sheets DB & Cloudflare R2 active.')}
                     />
                     <BalanceCard
                       metrics={metrics}

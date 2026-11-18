@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { uploadReceiptToR2, getSignedReceiptUrl, R2_BUCKET_NAME } from '@/lib/r2/client';
-import { createClient, getServiceSupabase } from '@/lib/supabase/server';
+import { uploadReceiptToR2, getSignedReceiptUrl } from '@/lib/r2/client';
+import { getSessionUser } from '@/lib/auth/session';
+import { fetchGoogleSheets } from '@/lib/sheets/googleSheets';
 
 export async function POST(request: NextRequest) {
   try {
-    const userClient = await createClient();
-    const { data: { user }, error: authError } = await userClient.auth.getUser();
-
-    if (authError || !user) {
+    const user = await getSessionUser(request);
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized: Please sign in' }, { status: 401 });
     }
 
@@ -24,7 +23,7 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Generate safe storage path in R2 namespaced by user ID
+    // Generate safe storage path in Cloudflare R2
     const now = new Date();
     const yyyy = now.getFullYear();
     const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -36,56 +35,32 @@ export async function POST(request: NextRequest) {
     await uploadReceiptToR2(buffer, storageKey, file.type || 'application/octet-stream');
 
     // 2. Simulated Smart OCR Engine for Bangladesh MFS (bKash, Nagad, Rocket, Bank SMS)
-    let ocrTrxId = claimedTrxId || `BK${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-    let ocrAmount = claimedAmount ? parseFloat(claimedAmount) : 1500.00;
-    let ocrConfidence = 96.5;
+    const ocrTrxId = claimedTrxId || `BK${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+    const ocrAmount = claimedAmount ? parseFloat(claimedAmount) : 1500.00;
+    const ocrConfidence = 97.2;
     let ocrMatchStatus: 'matched' | 'mismatch' | 'unclear' = 'matched';
 
     if (claimedTrxId && claimedTrxId.toUpperCase() !== ocrTrxId.toUpperCase()) {
       ocrMatchStatus = 'mismatch';
     }
 
-    // 3. Insert record into Supabase ft_receipts
-    let receiptRecord = null;
-    if (paymentId) {
-      const serviceDb = getServiceSupabase();
-      const { data, error } = await serviceDb
-        .from('ft_receipts')
-        .insert({
-          payment_id: paymentId,
-          user_id: user.id,
-          storage_bucket: R2_BUCKET_NAME,
-          storage_path: storageKey,
-          file_name: file.name,
-          file_size: buffer.length,
-          mime_type: file.type || 'image/jpeg',
-          ocr_raw_text: `Payment Receipt\nTrxID: ${ocrTrxId}\nAmount: ৳${ocrAmount}\nStatus: Completed`,
-          ocr_extracted_trx_id: ocrTrxId,
-          ocr_extracted_amount: ocrAmount,
-          ocr_confidence_score: ocrConfidence,
-          ocr_match_status: ocrMatchStatus,
-        })
-        .select()
-        .single();
-
-      if (!error) {
-        receiptRecord = data;
-        await serviceDb.from('ft_audit_trail').insert({
-          payment_id: paymentId,
-          user_id: user.id,
-          action: 'receipt_uploaded',
-          actor_type: 'system',
-          actor_name: 'OCR Engine',
-          details: {
-            storageKey,
-            ocrMatchStatus,
-            ocrConfidence,
-          },
-        });
-      }
-    }
-
     const signedViewUrl = await getSignedReceiptUrl(storageKey, 3600);
+
+    // 3. Record in Google Sheets Receipts tab
+    await fetchGoogleSheets('add_receipt', {
+      receipt: {
+        paymentId: paymentId || '',
+        trxId: ocrTrxId,
+        fileName: file.name,
+        fileSize: buffer.length,
+        mimeType: file.type || 'image/jpeg',
+        storageUrl: signedViewUrl,
+        ocrExtractedTrxId: ocrTrxId,
+        ocrExtractedAmount: ocrAmount,
+        ocrConfidence,
+        ocrStatus: ocrMatchStatus,
+      },
+    });
 
     return NextResponse.json({
       success: true,
@@ -97,9 +72,14 @@ export async function POST(request: NextRequest) {
         confidence: ocrConfidence,
         matchStatus: ocrMatchStatus,
       },
-      receipt: receiptRecord,
+      receipt: {
+        fileName: file.name,
+        fileSize: buffer.length,
+        storageUrl: signedViewUrl,
+      },
     });
   } catch (err: any) {
+    console.error('Receipt upload error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Mail, Lock, User, Phone, Eye, EyeOff, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
-import { supabase } from '@/lib/supabase/client';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -36,35 +35,27 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          data: {
-            full_name: fullName.trim(),
-            phone: phone.trim() || undefined,
-          },
-        },
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          fullName: fullName.trim(),
+          phone: phone.trim() || undefined,
+        }),
       });
 
-      if (error) {
-        setErrorMessage(error.message);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErrorMessage(data.error || 'Failed to create account. Please try again.');
         setIsLoading(false);
         return;
       }
 
-      // Check if email confirmation is required
-      if (data.user && !data.session) {
-        setVerificationPending(true);
-        setIsLoading(false);
-        return;
-      }
-
-      // If session exists immediately, redirect to dashboard
-      if (data.session) {
-        router.refresh();
-        router.push('/');
-      }
+      router.refresh();
+      router.push('/');
     } catch (err: any) {
       setErrorMessage(err.message || 'An unexpected error occurred during signup.');
       setIsLoading(false);

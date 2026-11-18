@@ -4,8 +4,7 @@ import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
-import { supabase } from '@/lib/supabase/client';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react';
 
 function LoginForm() {
   const router = useRouter();
@@ -27,27 +26,25 @@ function LoginForm() {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+        }),
       });
 
-      if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          setErrorMessage('Invalid email or password. Please verify and try again.');
-        } else if (error.message.includes('Email not confirmed')) {
-          setErrorMessage('Email verification required. Please check your inbox.');
-        } else {
-          setErrorMessage(error.message);
-        }
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErrorMessage(data.error || 'Invalid email or password. Please verify and try again.');
         setIsLoading(false);
         return;
       }
 
-      if (data.session) {
-        router.refresh();
-        router.push(returnTo);
-      }
+      router.refresh();
+      router.push(returnTo);
     } catch (err: any) {
       setErrorMessage(err.message || 'An unexpected error occurred. Please try again.');
       setIsLoading(false);

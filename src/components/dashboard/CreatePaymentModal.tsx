@@ -72,7 +72,7 @@ export function CreatePaymentModal({ isOpen, onClose, onSubmit }: CreatePaymentM
               Create & Verify Payment
             </h2>
             <p className="text-[11px] sm:text-xs text-[#62776A] mt-0.5 truncate">
-              Live Supabase DB + Cloudflare R2 Proof Storage
+              Google Sheets DB + Cloudflare R2 Proof Storage
             </p>
           </div>
           <button
@@ -239,7 +239,7 @@ export function CreatePaymentModal({ isOpen, onClose, onSubmit }: CreatePaymentM
               className="w-full h-11 sm:h-12 bg-[#0B2C1F] hover:bg-[#071F15] text-white rounded-xl sm:rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-emerald-float active:scale-[0.98] transition-all"
             >
               {isSubmitting ? (
-                <span className="animate-pulse">Storing in Supabase & R2...</span>
+                <span className="animate-pulse">Storing in Google Sheets & R2...</span>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 text-[#34D399]" />

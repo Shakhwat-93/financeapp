@@ -180,7 +180,7 @@ export function AnalyticsView({ onBack, transactions, metrics }: AnalyticsViewPr
                 Verified Balance: ৳{formatBDT(metrics.totalConfirmedBDT, false)}
               </div>
               <div className="text-[11px] text-[#476150] mt-0.5">
-                {metrics.confirmedCount} verified receipts in Supabase
+                {metrics.confirmedCount} verified receipts in Google Sheet
               </div>
             </div>
           </div>

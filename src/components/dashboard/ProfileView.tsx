@@ -2,9 +2,8 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Shield, Database, Cloud, Lock, ChevronRight, CheckCircle2, LogOut } from 'lucide-react';
+import { Shield, Database, Cloud, Lock, ChevronRight, CheckCircle2, LogOut, FileSpreadsheet } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
-import { supabase } from '@/lib/supabase/client';
 
 export interface ProfileViewProps {
   onShowSplashAgain: () => void;
@@ -17,7 +16,7 @@ export function ProfileView({ onShowSplashAgain, userEmail, userName }: ProfileV
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
+      await fetch('/api/auth/signout', { method: 'POST' });
       router.refresh();
       router.push('/login');
     } catch (err) {
@@ -66,20 +65,25 @@ export function ProfileView({ onShowSplashAgain, userEmail, userName }: ProfileV
             Connected Infrastructure Status
           </h3>
 
-          {/* Supabase Status */}
+          {/* Google Sheets Status */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#E8F5EE] flex items-center justify-center text-[#059669] shrink-0">
-                <Database className="w-4 h-4" />
+                <FileSpreadsheet className="w-4 h-4" />
               </div>
               <div className="min-w-0">
-                <div className="text-xs font-bold text-[#112117] truncate">Self-Hosted Supabase</div>
-                <div className="text-[10px] text-[#71867A] truncate">Kong Gateway (RLS User Isolation)</div>
+                <div className="text-xs font-bold text-[#112117] truncate">Google Sheets Database</div>
+                <div className="text-[10px] text-[#71867A] truncate">Cloud Spreadsheet (Realtime Ledger)</div>
               </div>
             </div>
-            <span className="text-[10px] sm:text-[11px] font-bold text-[#059669] bg-[#EBF7EE] px-2 py-0.5 rounded-md border border-[#CEEED6] shrink-0">
-              Active
-            </span>
+            <a
+              href="https://docs.google.com/spreadsheets/d/1BiWzOnqxJZcjEeRugH93h1f_TzBlUGC41yPS2BUeZGg/edit"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] sm:text-[11px] font-bold text-[#059669] hover:text-[#047857] bg-[#EBF7EE] px-2 py-0.5 rounded-md border border-[#CEEED6] shrink-0 transition-colors"
+            >
+              Open Sheet ↗
+            </a>
           </div>
 
           {/* Cloudflare R2 Status */}

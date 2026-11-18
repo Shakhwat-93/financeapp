@@ -1,41 +1,8 @@
-import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { getSessionUser } from '@/lib/auth/session';
 
 export async function proxy(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
-
-  // Validate session securely with Supabase server
-  const { data: { user } } = await supabase.auth.getUser();
-
+  const user = await getSessionUser(request);
   const pathname = request.nextUrl.pathname;
 
   const isAuthRoute =
@@ -44,16 +11,11 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/forgot-password') ||
     pathname.startsWith('/reset-password');
 
-  const isApiAuthCallback =
-    pathname.startsWith('/auth/') ||
-    pathname.startsWith('/api/auth/');
+  const isApiAuthRoute = pathname.startsWith('/api/auth/');
 
-  const isSupabaseProxy = pathname.startsWith('/api/supabase-proxy');
-
-  // If user is already authenticated and visits login/register, send to dashboard
+  // If user is already authenticated and visits login/register, redirect to dashboard
   if (user && isAuthRoute) {
     const rawReturnTo = request.nextUrl.searchParams.get('returnTo');
-    // Prevent open redirect: must start with single slash, not double slash or protocol
     const returnTo = rawReturnTo && rawReturnTo.startsWith('/') && !rawReturnTo.startsWith('//')
       ? rawReturnTo
       : '/';
@@ -61,7 +23,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // If user is NOT authenticated and visits a protected route
-  if (!user && !isAuthRoute && !isApiAuthCallback && !isSupabaseProxy) {
+  if (!user && !isAuthRoute && !isApiAuthRoute) {
     // If requesting protected API
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Unauthorized: Authentication required' }, { status: 401 });
@@ -75,7 +37,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {
