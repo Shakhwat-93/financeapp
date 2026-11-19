@@ -60,7 +60,7 @@ let localUsers = [
   {
     id: 'usr_001',
     email: 'shakhwat.rasel989@gmail.com',
-    password: 'password123',
+    password: '123456',
     name: 'Shakhwat Hossain',
     phone: '01711223344',
     role: 'admin',
@@ -68,15 +68,18 @@ let localUsers = [
   {
     id: 'usr_002',
     email: 'admin@fintech.bd',
-    password: 'password123',
+    password: '123456',
     name: 'Fintech Admin',
     phone: '01700112233',
     role: 'admin',
   },
 ];
 
-function getWebAppUrl(): string | null {
-  return process.env.GOOGLE_SHEETS_WEBAPP_URL || null;
+export const DEFAULT_WEBAPP_URL =
+  'https://script.google.com/macros/s/AKfycbxxUJQY4G-ClDkRbr6w4j5KCVeNbguBazV5IDp_49YKVD5jjEhWTofqzveEbp_FtupUgA/exec';
+
+function getWebAppUrl(): string {
+  return process.env.GOOGLE_SHEETS_WEBAPP_URL || DEFAULT_WEBAPP_URL;
 }
 
 export async function fetchGoogleSheets(action: string, payload: any = {}): Promise<any> {
