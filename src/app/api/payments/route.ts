@@ -15,12 +15,15 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || undefined;
     const limit = parseInt(searchParams.get('limit') || '50', 10);
 
-    const payments = await getPaymentsFromSheet({
-      status,
-      gateway,
-      search,
-      limit,
-    });
+    const payments = await getPaymentsFromSheet(
+      {
+        status,
+        gateway,
+        search,
+        limit,
+      },
+      user.email
+    );
 
     return NextResponse.json({ payments });
   } catch (err: any) {
@@ -56,18 +59,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const payment = await addPaymentToSheet({
-      trxId,
-      gateway,
-      amount: parseFloat(amount),
-      recipientName,
-      senderName: senderName || user.name || user.email.split('@')[0],
-      senderPhone: senderPhone || user.phone,
-      recipientPhone,
-      category,
-      note,
-      status,
-    });
+    const payment = await addPaymentToSheet(
+      {
+        trxId,
+        gateway,
+        amount: parseFloat(amount),
+        recipientName,
+        senderName: senderName || user.name || user.email.split('@')[0],
+        senderPhone: senderPhone || user.phone,
+        recipientPhone,
+        category,
+        note,
+        status,
+      },
+      user.email
+    );
 
     return NextResponse.json({ payment, success: true }, { status: 201 });
   } catch (err: any) {

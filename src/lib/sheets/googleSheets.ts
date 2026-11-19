@@ -17,6 +17,7 @@ let localPayments: PaymentTransaction[] = [
     status: 'verified',
     category: 'Shopping',
     note: 'Invoice #8491',
+    userEmail: 'shakhwat.rasel989@gmail.com',
     date: 'Nov 19, 2026',
     time: '2:00 AM',
     verifiedAt: '2026-11-19T02:00:00Z',
@@ -34,6 +35,7 @@ let localPayments: PaymentTransaction[] = [
     status: 'verified',
     category: 'Shopping',
     note: 'Winter purchase',
+    userEmail: 'shakhwat.rasel989@gmail.com',
     date: 'Nov 18, 2026',
     time: '7:30 PM',
     verifiedAt: '2026-11-18T19:30:00Z',
@@ -41,18 +43,21 @@ let localPayments: PaymentTransaction[] = [
   },
   {
     id: 'pmt_003',
-    trxId: 'RK4P82015L',
-    method: 'rocket',
-    amount: 1200.00,
+    trxId: 'IB234',
+    method: 'bank_transfer',
+    amount: 25000.00,
     currency: 'BDT',
-    senderName: 'Rahim Uddin',
-    senderPhone: '01822334455',
-    recipientName: 'Canvas Digital',
-    status: 'pending',
-    category: 'Business',
-    note: 'Web consulting',
-    date: 'Nov 18, 2026',
-    time: '3:10 PM',
+    senderName: 'Sayek Ahmed',
+    senderPhone: '01700112233',
+    recipientName: 'Freind',
+    status: 'verified',
+    category: 'Shopping',
+    note: '',
+    userEmail: 'ceocanvas@gmail.com',
+    date: 'Nov 19, 2026',
+    time: '4:49 AM',
+    verifiedAt: '2026-11-19T04:49:56.608Z',
+    verifiedBy: 'Automated Verification',
   },
 ];
 
@@ -122,18 +127,40 @@ export async function fetchGoogleSheets(action: string, payload: any = {}): Prom
 }
 
 // ------------------------------------------------------------------------------
-// PAYMENTS SERVICE
+// PAYMENTS SERVICE (User-Isolated)
 // ------------------------------------------------------------------------------
-export async function getPaymentsFromSheet(params: {
-  status?: string;
-  gateway?: string;
-  search?: string;
-  limit?: number;
-} = {}): Promise<PaymentTransaction[]> {
+export async function getPaymentsFromSheet(
+  params: {
+    status?: string;
+    gateway?: string;
+    search?: string;
+    limit?: number;
+  } = {},
+  userEmail?: string
+): Promise<PaymentTransaction[]> {
+  const normalizedEmail = userEmail?.trim().toLowerCase();
+
   // 1. Try Google Sheets Web App
-  const remote = await fetchGoogleSheets('get_payments', params);
+  const remote = await fetchGoogleSheets('get_payments', {
+    ...params,
+    user_email: normalizedEmail,
+  });
+
   if (remote && Array.isArray(remote.payments)) {
-    return remote.payments.map((p: any) => {
+    let rows = remote.payments;
+
+    // Strict user isolation filter
+    if (normalizedEmail) {
+      rows = rows.filter((p: any) => {
+        const rowEmail = (p.user_email || p.userEmail || '').trim().toLowerCase();
+        return rowEmail === normalizedEmail;
+      });
+    }
+
+    // Filter out blank or invalid rows
+    rows = rows.filter((p: any) => p.trx_id && Number(p.amount) > 0);
+
+    return rows.map((p: any) => {
       const d = p.created_at ? new Date(p.created_at) : new Date();
       return {
         id: String(p.id),
@@ -148,6 +175,7 @@ export async function getPaymentsFromSheet(params: {
         category: p.category || 'Shopping',
         note: p.note || undefined,
         receiptUrl: p.receipt_url || undefined,
+        userEmail: p.user_email || normalizedEmail,
         date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
         time: d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
         verifiedAt: p.verified_at || undefined,
@@ -158,6 +186,12 @@ export async function getPaymentsFromSheet(params: {
 
   // 2. Fallback in-memory filter
   let result = [...localPayments];
+  if (normalizedEmail) {
+    result = result.filter((p) => {
+      const pEmail = (p.userEmail || '').trim().toLowerCase();
+      return pEmail === normalizedEmail;
+    });
+  }
   if (params.status && params.status !== 'all') {
     result = result.filter((p) => p.status === params.status);
   }
@@ -177,26 +211,31 @@ export async function getPaymentsFromSheet(params: {
   return result.slice(0, params.limit || 50);
 }
 
-export async function addPaymentToSheet(paymentData: {
-  trxId: string;
-  gateway: string;
-  amount: number;
-  recipientName: string;
-  senderName?: string;
-  senderPhone?: string;
-  recipientPhone?: string;
-  category?: string;
-  note?: string;
-  receiptUrl?: string;
-  status?: string;
-}): Promise<PaymentTransaction> {
+export async function addPaymentToSheet(
+  paymentData: {
+    trxId: string;
+    gateway: string;
+    amount: number;
+    recipientName: string;
+    senderName?: string;
+    senderPhone?: string;
+    recipientPhone?: string;
+    category?: string;
+    note?: string;
+    receiptUrl?: string;
+    status?: string;
+  },
+  userEmail?: string
+): Promise<PaymentTransaction> {
   const cleanTrxId = paymentData.trxId.trim().toUpperCase();
+  const normalizedEmail = userEmail?.trim().toLowerCase();
 
   // 1. Try Google Sheets Web App
   const remote = await fetchGoogleSheets('add_payment', {
     payment: {
       ...paymentData,
       trxId: cleanTrxId,
+      user_email: normalizedEmail,
     },
   });
 
@@ -220,12 +259,12 @@ export async function addPaymentToSheet(paymentData: {
       category: (p.category || paymentData.category || 'Shopping') as any,
       note: p.note || paymentData.note,
       receiptUrl: p.receipt_url || paymentData.receiptUrl,
+      userEmail: normalizedEmail,
       date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       time: d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
       verifiedAt: p.verified_at || d.toISOString(),
       verifiedBy: p.verified_by || 'Automated Verification',
     };
-    // Also prepend to local
     localPayments.unshift(created);
     return created;
   }
@@ -250,6 +289,7 @@ export async function addPaymentToSheet(paymentData: {
     category: (paymentData.category || 'Shopping') as any,
     note: paymentData.note,
     receiptUrl: paymentData.receiptUrl,
+    userEmail: normalizedEmail,
     date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
     time: d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
     verifiedAt: d.toISOString(),
@@ -261,15 +301,11 @@ export async function addPaymentToSheet(paymentData: {
 }
 
 // ------------------------------------------------------------------------------
-// METRICS SERVICE
+// METRICS SERVICE (User-Isolated)
 // ------------------------------------------------------------------------------
-export async function getMetricsFromSheet(): Promise<DashboardMetrics> {
-  const remote = await fetchGoogleSheets('get_metrics');
-  if (remote?.metrics) {
-    return remote.metrics;
-  }
+export async function getMetricsFromSheet(userEmail?: string): Promise<DashboardMetrics> {
+  const userPayments = await getPaymentsFromSheet({}, userEmail);
 
-  // Calculate from local
   let totalConfirmedBDT = 0;
   let pendingConfirmationBDT = 0;
   let totalSentBDT = 0;
@@ -277,7 +313,7 @@ export async function getMetricsFromSheet(): Promise<DashboardMetrics> {
   let confirmedCount = 0;
   let pendingCount = 0;
 
-  for (const p of localPayments) {
+  for (const p of userPayments) {
     const amt = Number(p.amount) || 0;
     if (p.status === 'verified') {
       totalConfirmedBDT += amt;
@@ -286,6 +322,7 @@ export async function getMetricsFromSheet(): Promise<DashboardMetrics> {
       pendingConfirmationBDT += amt;
       pendingCount++;
     }
+
     totalSentBDT += amt;
   }
 

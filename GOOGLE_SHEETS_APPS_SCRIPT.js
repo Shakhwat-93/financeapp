@@ -87,7 +87,7 @@ function handleRequest(e) {
     } else if (action === 'add_payment') {
       responseData = addPayment(ss, params.payment || params);
     } else if (action === 'get_metrics') {
-      responseData = getMetrics(ss);
+      responseData = getMetrics(ss, params);
     } else if (action === 'add_receipt') {
       responseData = addReceipt(ss, params.receipt || params);
     } else if (action === 'login') {
@@ -125,12 +125,26 @@ function getPayments(ss, params) {
   var search = (params.search || '').toLowerCase();
   var statusFilter = params.status;
   var gatewayFilter = params.gateway;
+  var userEmail = (params.user_email || params.userEmail || '').trim().toLowerCase();
 
   for (var i = 1; i < rows.length; i++) {
     var row = rows[i];
     var p = {};
     for (var h = 0; h < headers.length; h++) {
       p[headers[h]] = row[h];
+    }
+
+    // Skip empty or invalid rows
+    if (!p.trx_id && !p.id) {
+      continue;
+    }
+
+    // Filter strictly by user_email if provided
+    if (userEmail) {
+      var rowEmail = String(p.user_email || '').trim().toLowerCase();
+      if (rowEmail !== userEmail) {
+        continue;
+      }
     }
 
     if (statusFilter && statusFilter !== 'all' && String(p.status).toLowerCase() !== statusFilter.toLowerCase()) {
@@ -164,7 +178,7 @@ function addPayment(ss, payment) {
       'id', 'trx_id', 'gateway', 'amount', 'currency', 'direction',
       'sender_name', 'sender_phone', 'recipient_name', 'recipient_phone',
       'status', 'category', 'note', 'receipt_url', 'created_at',
-      'verified_at', 'verified_by'
+      'verified_at', 'verified_by', 'user_email'
     ]);
   }
 
@@ -182,6 +196,8 @@ function addPayment(ss, payment) {
 
   var now = new Date().toISOString();
   var id = 'pmt_' + new Date().getTime();
+  var userEmail = String(payment.user_email || payment.userEmail || '').trim().toLowerCase();
+
   var row = [
     id,
     trxId,
@@ -200,6 +216,7 @@ function addPayment(ss, payment) {
     now,
     payment.status === 'verified' ? now : '',
     payment.status === 'verified' ? 'Automated Verification' : '',
+    userEmail,
   ];
 
   sheet.appendRow(row);
@@ -224,6 +241,7 @@ function addPayment(ss, payment) {
       created_at: row[14],
       verified_at: row[15],
       verified_by: row[16],
+      user_email: row[17],
     },
   };
 }
@@ -231,7 +249,9 @@ function addPayment(ss, payment) {
 // ------------------------------------------------------------------------------
 // METRICS CONTROLLER
 // ------------------------------------------------------------------------------
-function getMetrics(ss) {
+function getMetrics(ss, params) {
+  params = params || {};
+  var userEmail = (params.user_email || params.userEmail || '').trim().toLowerCase();
   var sheet = ss.getSheetByName('Payments');
   var totalConfirmedBDT = 0;
   var pendingConfirmationBDT = 0;
@@ -242,7 +262,22 @@ function getMetrics(ss) {
 
   if (sheet) {
     var rows = sheet.getDataRange().getValues();
+    var headers = rows[0] || [];
+    var emailIndex = headers.indexOf('user_email');
+    if (emailIndex === -1) emailIndex = 17;
+
     for (var i = 1; i < rows.length; i++) {
+      var trxId = String(rows[i][1] || '').trim();
+      if (!trxId) continue; // Skip empty row
+
+      // Filter strictly by user_email if provided
+      if (userEmail) {
+        var rowEmail = String(rows[i][emailIndex] || '').trim().toLowerCase();
+        if (rowEmail !== userEmail) {
+          continue;
+        }
+      }
+
       var amount = Number(rows[i][3]) || 0;
       var direction = String(rows[i][5] || '').toLowerCase();
       var status = String(rows[i][10] || '').toLowerCase();

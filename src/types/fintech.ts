@@ -19,6 +19,7 @@ export interface PaymentTransaction {
   category: 'Subscription' | 'Income' | 'Food & Drinks' | 'Transport' | 'Shopping' | 'Bills & Utilities' | 'Business';
   verifiedAt?: string;
   verifiedBy?: string;
+  userEmail?: string;
 }
 
 export interface DashboardMetrics {

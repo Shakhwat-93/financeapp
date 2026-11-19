@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized: Please sign in' }, { status: 401 });
     }
 
-    const metrics = await getMetricsFromSheet();
+    const metrics = await getMetricsFromSheet(user.email);
     return NextResponse.json({ metrics });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
