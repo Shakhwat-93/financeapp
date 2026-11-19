@@ -96,6 +96,7 @@ export async function fetchGoogleSheets(action: string, payload: any = {}): Prom
         action,
         ...payload,
       }),
+      redirect: 'follow',
       cache: 'no-store',
     });
 
